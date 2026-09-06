@@ -201,16 +201,4 @@ app.use((req, res) => {
   });
 });
 
-// ===============================
-// START SERVER
-// ===============================
-
-server.listen(PORT, () => {
-  console.log(
-    `Server running on port ${PORT}`
-  );
-
-  console.log(
-    "Socket.IO chat server is running"
-  );
-});
+module.exports = app;
