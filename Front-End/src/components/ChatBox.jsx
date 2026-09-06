@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-const socket = io("https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app");
+const socket = io(
+  "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app",
+  {
+    transports: ["polling"],
+    withCredentials: false,
+  }
+);
 
 function ChatBox() {
   const [open, setOpen] = useState(false);

@@ -1,15 +1,7 @@
 require("dotenv").config();
 
-const dns = require("dns");
-
-dns.setServers([
-  "8.8.8.8",
-  "8.8.4.4",
-]);
-
 const express = require("express");
 const cors = require("cors");
-const http = require("http");
 const path = require("path");
 const { Server } = require("socket.io");
 
@@ -23,86 +15,144 @@ const chatRoutes = require("./routes/chatRoutes");
 
 const app = express();
 
-const server = http.createServer(app);
+// ============================================
+// CORS
+// ============================================
 
-const PORT = process.env.PORT || 5000;
-const FRONTEND_URL =
-  process.env.FRONTEND_URL || "http://localhost:5173";
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://shop-ease-frontend-neon.vercel.app",
+];
 
-// ===============================
-// SOCKET.IO
-// ===============================
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests without an origin
+    // such as Postman/server-to-server requests
+    if (!origin) {
+      return callback(null, true);
+    }
 
-const io = new Server(server, {
-  cors: {
-    origin: FRONTEND_URL,
-    methods: ["GET", "POST"],
-    credentials: true,
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(
+      new Error(`CORS blocked: ${origin}`)
+    );
   },
-});
 
-// ===============================
-// DATABASE
-// ===============================
+  methods: [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+  ],
 
-connectDB();
+  credentials: true,
 
-// ===============================
-// MIDDLEWARE
-// ===============================
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+  ],
+};
 
-app.use(
-  cors({
-    origin: FRONTEND_URL,
-    credentials: true,
-  })
-);
+app.use(cors(corsOptions));
+
+app.options("*", cors(corsOptions));
+
+// ============================================
+// BODY PARSER
+// ============================================
 
 app.use(express.json());
 
-// ===============================
+// ============================================
+// DATABASE
+// ============================================
+
+connectDB();
+
+// ============================================
 // UPLOADS
-// ===============================
+// ============================================
 
 app.use(
   "/uploads",
-  express.static(path.join(__dirname, "uploads"))
+  express.static(
+    path.join(__dirname, "uploads")
+  )
 );
 
-// ===============================
-// ROUTES
-// ===============================
+// ============================================
+// API ROUTES
+// ============================================
 
-app.use("/api/products", productRoutes);
+app.use(
+  "/api/products",
+  productRoutes
+);
 
-app.use("/api/users", userRoutes);
+app.use(
+  "/api/users",
+  userRoutes
+);
 
-app.use("/api/orders", orderRoutes);
+app.use(
+  "/api/orders",
+  orderRoutes
+);
 
-app.use("/api/admin", adminRoutes);
+app.use(
+  "/api/admin",
+  adminRoutes
+);
 
-app.use("/api/chat", chatRoutes);
+app.use(
+  "/api/chat",
+  chatRoutes
+);
 
-// ===============================
-// HOME ROUTE
-// ===============================
+// ============================================
+// HOME
+// ============================================
 
 app.get("/", (req, res) => {
-  res.json({
+  res.status(200).json({
+    success: true,
     message: "E-commerce API is running",
   });
 });
 
-// ===============================
-// SOCKET.IO CHAT
-// ===============================
+// ============================================
+// SOCKET.IO
+// ============================================
+
+const io = new Server({
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+
+  transports: ["polling", "websocket"],
+});
+
+// ============================================
+// SOCKET CONNECTION
+// ============================================
 
 io.on("connection", (socket) => {
-  console.log("Socket connected:", socket.id);
+  console.log(
+    "Socket connected:",
+    socket.id
+  );
 
-  // =================================
+  // ========================================
   // CUSTOMER JOIN CHAT
-  // =================================
+  // ========================================
 
   socket.on("joinChat", (userId) => {
     if (!userId) {
@@ -113,95 +163,124 @@ io.on("connection", (socket) => {
 
     socket.join(room);
 
-    console.log(`Customer joined room: ${room}`);
+    console.log(
+      `Customer joined room: ${room}`
+    );
   });
 
-  // =================================
+  // ========================================
   // ADMIN JOIN CHAT
-  // =================================
+  // ========================================
 
   socket.on("joinAdmin", () => {
     socket.join("admin");
 
-    console.log("Admin joined admin chat room");
+    console.log(
+      "Admin joined admin room"
+    );
   });
 
-  // =================================
+  // ========================================
   // SEND MESSAGE
-  // =================================
+  // ========================================
 
   socket.on("sendMessage", (message) => {
-    console.log("Socket message received:", message);
-
     if (!message) {
       return;
     }
 
+    console.log(
+      "Socket message:",
+      message
+    );
+
     const userId =
       message.user?._id ||
+      message.user?.id ||
       message.user;
 
     if (!userId) {
-      console.log("Message does not contain user ID");
+      console.log(
+        "No user ID found in message"
+      );
+
       return;
     }
 
-    // =================================
     // CUSTOMER -> ADMIN
-    // =================================
-
     if (message.sender === "user") {
       io.to("admin").emit(
         "receiveMessage",
         message
       );
 
-      console.log("Customer message sent to admin");
+      console.log(
+        "Customer message sent to admin"
+      );
     }
 
-    // =================================
     // ADMIN -> CUSTOMER
-    // =================================
-
     if (message.sender === "admin") {
       io.to(`user_${userId}`).emit(
         "receiveMessage",
         message
       );
 
-      console.log("Admin reply sent to customer");
+      console.log(
+        "Admin message sent to customer"
+      );
     }
   });
 
-  // =================================
+  // ========================================
   // DISCONNECT
-  // =================================
+  // ========================================
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", (reason) => {
     console.log(
-      "Socket disconnected:",
-      socket.id
+      `Socket disconnected: ${socket.id}`,
+      reason
     );
   });
 });
 
-// ===============================
+// ============================================
 // 404
-// ===============================
+// ============================================
 
 app.use((req, res) => {
   res.status(404).json({
+    success: false,
     message: "Route not found",
+    path: req.originalUrl,
   });
 });
 
-// ===============================
-// START SERVER
-// ===============================
+// ============================================
+// ERROR HANDLER
+// ============================================
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Frontend URL: ${FRONTEND_URL}`);
+app.use((err, req, res, next) => {
+  console.error(
+    "Server error:",
+    err
+  );
+
+  if (err.message?.startsWith("CORS blocked")) {
+    return res.status(403).json({
+      success: false,
+      message: err.message,
+    });
+  }
+
+  res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  });
 });
+
+// ============================================
+// EXPORT FOR VERCEL
+// ============================================
 
 module.exports = app;
