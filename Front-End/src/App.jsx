@@ -2,14 +2,14 @@ import { Routes, Route, useLocation } from "react-router-dom";
 
 import Navbar from "./components/navbar";
 
-import Home from "./pages/Home";
-import Shop from "./pages/Shop";
+import Home from "./pages/home";
+import Shop from "./pages/shop";
 import ProductDetails from "./pages/ProductDetails";
-import Cart from "./pages/Cart";
+import Cart from "./pages/cart";
 import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Orders from "./pages/Orders";
+import Orders from "./pages/orders";
 
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
