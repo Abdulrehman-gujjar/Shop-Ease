@@ -21,7 +21,7 @@ function AdminOrders() {
   const fetchOrders = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/orders/admin/all",
+        "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/orders/admin/all",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -48,7 +48,7 @@ function AdminOrders() {
   const updateStatus = async (id, status) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/orders/admin/${id}/status`,
+        `https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/orders/admin/${id}/status`,
         {
           method: "PUT",
           headers: {

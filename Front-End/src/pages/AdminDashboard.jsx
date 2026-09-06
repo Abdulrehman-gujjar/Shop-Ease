@@ -21,7 +21,7 @@ function AdminDashboard() {
   const fetchStats = async () => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/admin/stats",
+        "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/admin/stats",
         {
           headers: {
             Authorization: `Bearer ${token}`,

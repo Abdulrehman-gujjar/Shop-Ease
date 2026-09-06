@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5000");
+const socket = io("https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app");
 
 function ChatBox() {
   const [open, setOpen] = useState(false);
@@ -44,7 +44,7 @@ function ChatBox() {
     const loadMessages = async () => {
       try {
         const response = await fetch(
-          "http://localhost:5000/api/chat",
+          "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/chat",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -144,7 +144,7 @@ function ChatBox() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/chat",
+        "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/chat",
         {
           method: "POST",
 

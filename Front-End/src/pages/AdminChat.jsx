@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { Link, useNavigate } from "react-router-dom";
 
-const socket = io("http://localhost:5000");
+const socket = io("https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app");
 
 function AdminChat() {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ function AdminChat() {
     const loadChat = async () => {
       try {
         const response = await fetch(
-          "http://localhost:5000/api/admin/chat",
+          "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/admin/chat",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -174,7 +174,7 @@ function AdminChat() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/admin/chat",
+        "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/admin/chat",
         {
           method: "POST",
 

@@ -13,8 +13,8 @@ const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const ADMIN_EMAIL = "admin@gmail.com";
-    const ADMIN_PASSWORD = "admin123";
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -39,7 +39,7 @@ const adminLogin = async (req, res) => {
       process.env.JWT_SECRET,
       {
         expiresIn: "7d",
-      }
+      },
     );
 
     res.status(200).json({
@@ -90,10 +90,7 @@ const getAdminStats = async (req, res) => {
       },
     ]);
 
-    const totalSales =
-      salesResult.length > 0
-        ? salesResult[0].totalSales
-        : 0;
+    const totalSales = salesResult.length > 0 ? salesResult[0].totalSales : 0;
 
     const pendingOrders = await Order.countDocuments({
       status: "Pending",
@@ -187,10 +184,7 @@ const sendAdminMessage = async (req, res) => {
       message: message.trim(),
     });
 
-    const populatedMessage = await newMessage.populate(
-      "user",
-      "name email"
-    );
+    const populatedMessage = await newMessage.populate("user", "name email");
 
     res.status(201).json(populatedMessage);
   } catch (error) {

@@ -85,7 +85,7 @@ function Shop() {
         setError("");
 
         const response = await axios.get(
-          "http://localhost:5000/api/products"
+          "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/products"
         );
 
         setProducts(response.data);

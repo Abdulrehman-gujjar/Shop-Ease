@@ -17,7 +17,7 @@ function ProductDetails() {
     const getProduct = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/products/${id}`
+          `https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/products/${id}`
         );
 
         setProduct(response.data);

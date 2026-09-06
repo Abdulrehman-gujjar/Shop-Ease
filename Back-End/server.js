@@ -25,18 +25,21 @@ const app = express();
 
 const server = http.createServer(app);
 
+const PORT = process.env.PORT || 5000;
+const FRONTEND_URL =
+  process.env.FRONTEND_URL || "http://localhost:5173";
+
 // ===============================
 // SOCKET.IO
 // ===============================
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: FRONTEND_URL,
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
-
-const PORT = process.env.PORT || 5000;
 
 // ===============================
 // DATABASE
@@ -48,7 +51,12 @@ connectDB();
 // MIDDLEWARE
 // ===============================
 
-app.use(cors());
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 
@@ -105,9 +113,7 @@ io.on("connection", (socket) => {
 
     socket.join(room);
 
-    console.log(
-      `Customer joined room: ${room}`
-    );
+    console.log(`Customer joined room: ${room}`);
   });
 
   // =================================
@@ -117,9 +123,7 @@ io.on("connection", (socket) => {
   socket.on("joinAdmin", () => {
     socket.join("admin");
 
-    console.log(
-      "Admin joined admin chat room"
-    );
+    console.log("Admin joined admin chat room");
   });
 
   // =================================
@@ -127,10 +131,7 @@ io.on("connection", (socket) => {
   // =================================
 
   socket.on("sendMessage", (message) => {
-    console.log(
-      "Socket message received:",
-      message
-    );
+    console.log("Socket message received:", message);
 
     if (!message) {
       return;
@@ -141,10 +142,7 @@ io.on("connection", (socket) => {
       message.user;
 
     if (!userId) {
-      console.log(
-        "Message does not contain user ID"
-      );
-
+      console.log("Message does not contain user ID");
       return;
     }
 
@@ -158,9 +156,7 @@ io.on("connection", (socket) => {
         message
       );
 
-      console.log(
-        "Customer message sent to admin"
-      );
+      console.log("Customer message sent to admin");
     }
 
     // =================================
@@ -173,9 +169,7 @@ io.on("connection", (socket) => {
         message
       );
 
-      console.log(
-        "Admin reply sent to customer"
-      );
+      console.log("Admin reply sent to customer");
     }
   });
 
@@ -199,6 +193,15 @@ app.use((req, res) => {
   res.status(404).json({
     message: "Route not found",
   });
+});
+
+// ===============================
+// START SERVER
+// ===============================
+
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Frontend URL: ${FRONTEND_URL}`);
 });
 
 module.exports = app;

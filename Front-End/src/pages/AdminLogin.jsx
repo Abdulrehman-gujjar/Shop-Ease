@@ -15,7 +15,7 @@ function AdminLogin() {
       setLoading(true);
 
       const response = await fetch(
-        "http://localhost:5000/api/admin/login",
+        "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/admin/login",
         {
           method: "POST",
           headers: {
