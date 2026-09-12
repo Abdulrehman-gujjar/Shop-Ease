@@ -9,41 +9,46 @@ function AdminDashboard() {
 
   const token = localStorage.getItem("adminToken");
 
-  useEffect(() => {
-    if (!token) {
-      navigate("/admin/login");
-      return;
-    }
+ useEffect(() => {
+  if (!token) {
+    navigate("/admin/login");
+    return;
+  }
 
-    fetchStats();
-  }, [token, navigate]);
+  fetchStats();
+}, [token, navigate]);
 
-  const fetchStats = async () => {
-    try {
-      const response = await fetch(
-        "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/admin/stats",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.message || "Failed to load dashboard");
-        return;
+const fetchStats = async () => {
+  try {
+    const response = await fetch(
+      "https://shop-ease-backend-blush.vercel.app/api/admin/stats",
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       }
+    );
 
-      setStats(data);
-    } catch (error) {
-      console.error("Dashboard error:", error);
-      alert("Server error");
-    } finally {
-      setLoading(false);
+    const data = await response.json();
+
+    console.log("Dashboard API Response:", data);
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Failed to load dashboard data"
+      );
     }
-  };
+
+    setStats(data);
+  } catch (error) {
+    console.error("Dashboard Error:", error);
+    setStats(null);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
