@@ -41,7 +41,7 @@ function AdminProducts() {
       setLoading(true);
 
       const response = await fetch(
-        "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/products"
+        "https://shop-ease-backend-blush.vercel.app/api/products"
       );
 
       const data = await response.json();
@@ -143,7 +143,7 @@ function AdminProducts() {
       setUploading(true);
 
       const response = await fetch(
-        "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/products",
+        "https://shop-ease-backend-blush.vercel.app/api/products",
         {
           method: "POST",
 
@@ -200,7 +200,7 @@ function AdminProducts() {
 
     try {
       const response = await fetch(
-        `https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/products/${id}`,
+        `https://shop-ease-backend-blush.vercel.app/api/products/${id}`,
         {
           method: "DELETE",
 
@@ -255,7 +255,7 @@ function AdminProducts() {
     }
 
     // If backend stores /uploads/filename
-    return `https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app${thumbnail.startsWith("/") ? "" : "/"}${thumbnail}`;
+    return `https://shop-ease-backend-blush.vercel.app${thumbnail.startsWith("/") ? "" : "/"}${thumbnail}`;
   };
 
   return (
