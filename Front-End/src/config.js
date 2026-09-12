@@ -1,5 +1,5 @@
-export const API_URL =
-  "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app";
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://shop-ease-backend-blush.vercel.app";
 
-export const SOCKET_URL =
-  "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app";
+export default API_URL;

@@ -3,6 +3,8 @@ import axios from "axios";
 import ProductCard from "./ProductCard";
 import Loader from "./Loader";
 
+const API_URL = "https://shop-ease-backend-blush.vercel.app";
+
 function HighlightedProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,12 +14,15 @@ function HighlightedProducts() {
     const getProducts = async () => {
       try {
         const response = await axios.get(
-          "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/products"
+          `${API_URL}/api/products`
         );
 
-        setProducts(response.data);
+        const productData = response.data.products || response.data;
+
+        setProducts(productData);
       } catch (error) {
-        console.log(error);
+        console.error("Products error:", error);
+
         setError("Products load nahi ho rahe.");
       } finally {
         setLoading(false);
@@ -33,26 +38,32 @@ function HighlightedProducts() {
 
   if (error) {
     return (
-      <section className="max-w-6xl mx-auto px-6 py-12 text-center">
-        <p className="text-red-500 text-lg">{error}</p>
+      <section className="mx-auto max-w-6xl px-6 py-12 text-center">
+        <p className="text-lg text-red-500">{error}</p>
       </section>
     );
   }
 
   return (
-    <section className="max-w-7xl mx-auto px-6 py-14">
-      <h2 className="text-3xl font-bold text-center mb-10">
+    <section className="mx-auto max-w-7xl px-6 py-14">
+      <h2 className="mb-10 text-center text-3xl font-bold">
         Featured Products
       </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {products.slice(0, 8).map((product) => (
-          <ProductCard
-            key={product._id}
-            product={product}
-          />
-        ))}
-      </div>
+      {products.length === 0 ? (
+        <p className="text-center text-gray-500">
+          No products found.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {products.slice(0, 8).map((product) => (
+            <ProductCard
+              key={product._id || product.id}
+              product={product}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
