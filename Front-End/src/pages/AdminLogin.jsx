@@ -12,8 +12,8 @@ function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = async (event) => {
-    event.preventDefault();
+  const handleLogin = async (e) => {
+    e.preventDefault();
 
     setLoading(true);
     setError("");
@@ -22,8 +22,8 @@ function AdminLogin() {
       const response = await axios.post(
         `${API_URL}/api/admin/login`,
         {
-          email: email.trim().toLowerCase(),
-          password: password,
+          email,
+          password,
         },
         {
           headers: {
@@ -45,14 +45,12 @@ function AdminLogin() {
 
       navigate("/admin");
     } catch (error) {
-      console.log(
-        "Admin Login Error:",
-        error.response?.data || error.message
-      );
+      console.log("Admin login error:", error.response?.data || error.message);
 
       setError(
         error.response?.data?.message ||
-          "Admin login failed. Please check your email and password."
+          error.response?.data?.error ||
+          "Invalid email or password"
       );
     } finally {
       setLoading(false);
@@ -60,60 +58,50 @@ function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-800">
-            Admin Login
-          </h1>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-md p-8">
+        <h1 className="text-2xl font-bold text-center text-gray-800 mb-2">
+          Admin Login
+        </h1>
 
-          <p className="mt-2 text-sm text-gray-500">
-            Login to manage your ShopEase store
-          </p>
-        </div>
+        <p className="text-center text-gray-500 mb-6">
+          Login to manage ShopEase
+        </p>
 
         {error && (
-          <div className="mb-5 rounded-lg bg-red-100 px-4 py-3 text-sm text-red-700">
+          <div className="mb-4 rounded-lg bg-red-100 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label
-              htmlFor="admin-email"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
-              Admin Email
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Email
             </label>
 
             <input
-              id="admin-email"
               type="email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@gmail.com"
               required
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="admin-password"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
+            <label className="block mb-2 text-sm font-medium text-gray-700">
               Password
             </label>
 
             <input
-              id="admin-password"
               type="password"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="Enter admin password"
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter password"
               required
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
             />
           </div>
 
