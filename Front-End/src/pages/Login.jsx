@@ -12,7 +12,7 @@ function Login() {
 
     try {
       const response = await fetch(
-        "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/users/login",
+        "https://shop-ease-backend-blush.vercel.app",
         {
           method: "POST",
           headers: {

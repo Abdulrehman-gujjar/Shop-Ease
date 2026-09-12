@@ -1,14 +1,5 @@
 import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
 import { Link, useNavigate } from "react-router-dom";
-
-const socket = io(
-  "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app",
-  {
-    transports: ["polling"],
-    withCredentials: false,
-  }
-);
 function AdminChat() {
   const navigate = useNavigate();
 
@@ -29,8 +20,6 @@ function AdminChat() {
       return;
     }
 
-    // Admin ko socket room mein join karwao
-    socket.emit("joinAdmin");
 
     // =======================================
     // OLD MESSAGES LOAD
@@ -39,7 +28,7 @@ function AdminChat() {
     const loadChat = async () => {
       try {
         const response = await fetch(
-          "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/admin/chat",
+          "https://shop-ease-backend-blush.vercel.app/api/admin/chat",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -149,17 +138,7 @@ function AdminChat() {
       }
     };
 
-    socket.on(
-      "receiveMessage",
-      handleReceiveMessage
-    );
 
-    return () => {
-      socket.off(
-        "receiveMessage",
-        handleReceiveMessage
-      );
-    };
   }, [token, navigate]);
 
   // =========================================
@@ -179,7 +158,7 @@ function AdminChat() {
 
     try {
       const response = await fetch(
-        "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/admin/chat",
+        "https://shop-ease-backend-blush.vercel.app/api/admin/chat",
         {
           method: "POST",
 
@@ -222,10 +201,7 @@ function AdminChat() {
       });
 
       // Customer ko realtime bhejo
-      socket.emit(
-        "sendMessage",
-        data
-      );
+  
 
       setMessage("");
     } catch (error) {
