@@ -1,9 +1,15 @@
 require("dotenv").config();
 
+const dns = require("dns");
+
+dns.setServers([
+  "8.8.8.8",
+  "8.8.4.4",
+]);
+
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const { Server } = require("socket.io");
 
 const connectDB = require("./db");
 
@@ -15,238 +21,74 @@ const chatRoutes = require("./routes/chatRoutes");
 
 const app = express();
 
-// ============================================
-// CORS
-// ============================================
+const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://127.0.0.1:5173",
+  "http://localhost:5174",
   "https://shop-ease-frontend-neon.vercel.app",
 ];
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests without an origin
-    // such as Postman/server-to-server requests
-    if (!origin) {
-      return callback(null, true);
-    }
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
+    credentials: true,
+  })
+);
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+app.use(express.json({ limit: "10mb" }));
 
-    return callback(
-      new Error(`CORS blocked: ${origin}`)
-    );
-  },
-
-  methods: [
-    "GET",
-    "POST",
-    "PUT",
-    "PATCH",
-    "DELETE",
-    "OPTIONS",
-  ],
-
-  credentials: true,
-
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-  ],
-};
-
-app.use(cors(corsOptions));
-
-app.options("*", cors(corsOptions));
-
-// ============================================
-// BODY PARSER
-// ============================================
-
-app.use(express.json());
-
-// ============================================
-// DATABASE
-// ============================================
-
-connectDB();
-
-// ============================================
-// UPLOADS
-// ============================================
+app.use(express.urlencoded({ extended: true }));
 
 app.use(
   "/uploads",
-  express.static(
-    path.join(__dirname, "uploads")
-  )
+  express.static(path.join(__dirname, "uploads"))
 );
 
-// ============================================
-// API ROUTES
-// ============================================
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error("Database connection failed:", error.message);
 
-app.use(
-  "/api/products",
-  productRoutes
-);
-
-app.use(
-  "/api/users",
-  userRoutes
-);
-
-app.use(
-  "/api/orders",
-  orderRoutes
-);
-
-app.use(
-  "/api/admin",
-  adminRoutes
-);
-
-app.use(
-  "/api/chat",
-  chatRoutes
-);
-
-// ============================================
-// HOME
-// ============================================
+    return res.status(500).json({
+      success: false,
+      message: "Database connection failed",
+    });
+  }
+});
 
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "E-commerce API is running",
+    message: "ShopEase API is running",
+    environment: process.env.VERCEL ? "Vercel" : "Local",
   });
 });
 
-// ============================================
-// SOCKET.IO
-// ============================================
-
-const io = new Server({
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-
-  transports: ["polling", "websocket"],
-});
-
-// ============================================
-// SOCKET CONNECTION
-// ============================================
-
-io.on("connection", (socket) => {
-  console.log(
-    "Socket connected:",
-    socket.id
-  );
-
-  // ========================================
-  // CUSTOMER JOIN CHAT
-  // ========================================
-
-  socket.on("joinChat", (userId) => {
-    if (!userId) {
-      return;
-    }
-
-    const room = `user_${userId}`;
-
-    socket.join(room);
-
-    console.log(
-      `Customer joined room: ${room}`
-    );
-  });
-
-  // ========================================
-  // ADMIN JOIN CHAT
-  // ========================================
-
-  socket.on("joinAdmin", () => {
-    socket.join("admin");
-
-    console.log(
-      "Admin joined admin room"
-    );
-  });
-
-  // ========================================
-  // SEND MESSAGE
-  // ========================================
-
-  socket.on("sendMessage", (message) => {
-    if (!message) {
-      return;
-    }
-
-    console.log(
-      "Socket message:",
-      message
-    );
-
-    const userId =
-      message.user?._id ||
-      message.user?.id ||
-      message.user;
-
-    if (!userId) {
-      console.log(
-        "No user ID found in message"
-      );
-
-      return;
-    }
-
-    // CUSTOMER -> ADMIN
-    if (message.sender === "user") {
-      io.to("admin").emit(
-        "receiveMessage",
-        message
-      );
-
-      console.log(
-        "Customer message sent to admin"
-      );
-    }
-
-    // ADMIN -> CUSTOMER
-    if (message.sender === "admin") {
-      io.to(`user_${userId}`).emit(
-        "receiveMessage",
-        message
-      );
-
-      console.log(
-        "Admin message sent to customer"
-      );
-    }
-  });
-
-  // ========================================
-  // DISCONNECT
-  // ========================================
-
-  socket.on("disconnect", (reason) => {
-    console.log(
-      `Socket disconnected: ${socket.id}`,
-      reason
-    );
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Backend is healthy",
   });
 });
 
-// ============================================
-// 404
-// ============================================
+app.use("/api/products", productRoutes);
+
+app.use("/api/users", userRoutes);
+
+app.use("/api/orders", orderRoutes);
+
+app.use("/api/admin", adminRoutes);
+
+app.use("/api/chat", chatRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
@@ -256,31 +98,19 @@ app.use((req, res) => {
   });
 });
 
-// ============================================
-// ERROR HANDLER
-// ============================================
+app.use((error, req, res, next) => {
+  console.error("Server error:", error);
 
-app.use((err, req, res, next) => {
-  console.error(
-    "Server error:",
-    err
-  );
-
-  if (err.message?.startsWith("CORS blocked")) {
-    return res.status(403).json({
-      success: false,
-      message: err.message,
-    });
-  }
-
-  res.status(500).json({
+  res.status(error.status || 500).json({
     success: false,
-    message: "Internal server error",
+    message: error.message || "Internal server error",
   });
 });
 
-// ============================================
-// EXPORT FOR VERCEL
-// ============================================
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
 
 module.exports = app;
