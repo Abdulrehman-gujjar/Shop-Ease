@@ -1,141 +1,130 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const API_URL = "https://shop-ease-backend-blush.vercel.app";
 
 function AdminLogin() {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("admin@gmail.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleLogin = async (event) => {
+    event.preventDefault();
+
+    setLoading(true);
+    setError("");
 
     try {
-      setLoading(true);
-
-      const response = await fetch(
-        "https://shop-ease-backend-blush.vercel.app",
+      const response = await axios.post(
+        `${API_URL}/api/admin/login`,
         {
-          method: "POST",
+          email: email.trim().toLowerCase(),
+          password: password,
+        },
+        {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
         }
       );
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.message || "Invalid admin credentials");
-        return;
+      if (response.data.token) {
+        localStorage.setItem("adminToken", response.data.token);
       }
 
-      localStorage.setItem("adminToken", data.token);
-      localStorage.setItem(
-        "admin",
-        JSON.stringify(data.admin || { email })
-      );
-
-      alert("Admin Login Successful!");
+      if (response.data.admin) {
+        localStorage.setItem(
+          "admin",
+          JSON.stringify(response.data.admin)
+        );
+      }
 
       navigate("/admin");
     } catch (error) {
-      console.error(error);
-      alert("Server error. Please try again.");
+      console.log(
+        "Admin Login Error:",
+        error.response?.data || error.message
+      );
+
+      setError(
+        error.response?.data?.message ||
+          "Admin login failed. Please check your email and password."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-blue-900 flex items-center justify-center px-4">
-
-      <div className="w-full max-w-md">
-
-        <div className="text-center mb-8">
-          <Link
-            to="/"
-            className="text-3xl font-extrabold text-white"
-          >
-            Shop<span className="text-blue-400">Ease</span>
-          </Link>
-
-          <p className="text-gray-300 mt-2">
-            Admin Panel Login
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8">
-
-          <h1 className="text-2xl font-extrabold text-gray-900 text-center">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-800">
             Admin Login
           </h1>
 
-          <p className="text-center text-gray-500 mt-2 mb-7">
-            Login to manage your store
+          <p className="mt-2 text-sm text-gray-500">
+            Login to manage your ShopEase store
           </p>
-
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-          >
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Admin Email
-              </label>
-
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@gmail.com"
-                required
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Password
-              </label>
-
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter admin password"
-                required
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3.5 rounded-xl font-semibold transition"
-            >
-              {loading ? "Logging in..." : "Admin Login"}
-            </button>
-
-          </form>
-
-          <div className="mt-6 text-center">
-            <Link
-              to="/"
-              className="text-sm text-gray-500 hover:text-blue-600"
-            >
-              ← Back to Store
-            </Link>
-          </div>
-
         </div>
 
+        {error && (
+          <div className="mb-5 rounded-lg bg-red-100 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="space-y-5">
+          <div>
+            <label
+              htmlFor="admin-email"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Admin Email
+            </label>
+
+            <input
+              id="admin-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="admin@gmail.com"
+              required
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="admin-password"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Password
+            </label>
+
+            <input
+              id="admin-password"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Enter admin password"
+              required
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
+        </form>
       </div>
     </div>
   );
