@@ -11,35 +11,32 @@ const adminProtect = require("../middleware/adminMiddleware");
 
 const router = express.Router();
 
-// =========================
-// ADMIN LOGIN
-// =========================
+// ADMIN BASE TEST ROUTE
+router.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Admin API is working",
+  });
+});
 
+// ADMIN LOGIN
 router.post("/login", adminLogin);
 
-// =========================
-// ADMIN DASHBOARD
-// =========================
-
-// Get dashboard statistics
+// ADMIN DASHBOARD STATS
 router.get(
   "/stats",
   adminProtect,
   getAdminStats
 );
 
-// =========================
-// ADMIN CHAT
-// =========================
-
-// Get chat messages
+// ADMIN CHAT MESSAGES
 router.get(
   "/chat",
   adminProtect,
   getChatMessages
 );
 
-// Send admin message
+// ADMIN SEND MESSAGE
 router.post(
   "/chat",
   adminProtect,

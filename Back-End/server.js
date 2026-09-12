@@ -21,8 +21,6 @@ const chatRoutes = require("./routes/chatRoutes");
 
 const app = express();
 
-const PORT = process.env.PORT || 5000;
-
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
@@ -43,7 +41,6 @@ app.use(
 );
 
 app.use(express.json({ limit: "10mb" }));
-
 app.use(express.urlencoded({ extended: true }));
 
 app.use(
@@ -61,6 +58,7 @@ app.use(async (req, res, next) => {
     return res.status(500).json({
       success: false,
       message: "Database connection failed",
+      error: error.message,
     });
   }
 });
@@ -81,13 +79,9 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/products", productRoutes);
-
 app.use("/api/users", userRoutes);
-
 app.use("/api/orders", orderRoutes);
-
 app.use("/api/admin", adminRoutes);
-
 app.use("/api/chat", chatRoutes);
 
 app.use((req, res) => {
@@ -108,8 +102,10 @@ app.use((error, req, res, next) => {
 });
 
 if (!process.env.VERCEL) {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  app.listen(process.env.PORT || 5000, () => {
+    console.log(
+      `Server running on port ${process.env.PORT || 5000}`
+    );
   });
 }
 
