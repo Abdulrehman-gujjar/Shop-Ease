@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 import Loader from "../components/Loader";
-import { API_URL } from "../config/api";
+
+const API_URL = "https://shop-ease-backend-blush.vercel.app";
 
 const Shop = () => {
   const [searchParams] = useSearchParams();
@@ -31,11 +32,17 @@ const Shop = () => {
           : data.products || data.data || [];
 
         const filteredProducts = selectedCategory
-          ? allProducts.filter(
-              (product) =>
-                product.category?.toLowerCase() ===
-                selectedCategory.toLowerCase()
-            )
+          ? allProducts.filter((product) => {
+              const productCategory = product.category
+                ?.trim()
+                .toLowerCase();
+
+              const categoryFromUrl = selectedCategory
+                .trim()
+                .toLowerCase();
+
+              return productCategory === categoryFromUrl;
+            })
           : allProducts;
 
         setProducts(filteredProducts);
@@ -66,7 +73,7 @@ const Shop = () => {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white"
+          className="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
         >
           Try Again
         </button>
@@ -75,13 +82,13 @@ const Shop = () => {
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-12">
+    <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
       <div className="mb-10">
         <p className="mb-2 text-sm font-bold uppercase tracking-widest text-blue-600">
           ShopEase Collection
         </p>
 
-        <h1 className="text-4xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold capitalize text-gray-900 sm:text-4xl">
           {selectedCategory || "All Products"}
         </h1>
 
@@ -99,6 +106,13 @@ const Shop = () => {
           <p className="mt-2 text-gray-500">
             Is category mein abhi koi product available nahi.
           </p>
+
+          <a
+            href="/shop"
+            className="mt-5 inline-block rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
+          >
+            View All Products
+          </a>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
