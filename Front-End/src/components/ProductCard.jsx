@@ -1,84 +1,81 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
+import { getImageUrl } from "../utils/imageUrl";
 
-function ProductCard({ product }) {
-  const { addToCart } = useContext(CartContext);
+const ProductCard = ({ product }) => {
+  const { addToCart, addToWishlist } = useContext(CartContext);
+
+  const imageUrl = getImageUrl(
+    product.thumbnail || product.images?.[0]
+  );
 
   return (
-    <div className="group w-full bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col">
-
-      {/* Product Image */}
-      <div className="relative bg-gray-50 p-3">
-
+    <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+      <div className="relative flex h-64 items-center justify-center overflow-hidden bg-gray-50 p-5">
         {product.discountPercentage > 0 && (
-          <span className="absolute top-5 left-5 z-10 bg-pink-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">
+          <span className="absolute left-3 top-3 z-10 rounded-full bg-red-500 px-3 py-1 text-xs font-bold text-white">
             SALE
           </span>
         )}
 
         <img
-          src={product.thumbnail}
-          alt={product.title}
-          className="w-full aspect-square object-cover rounded-xl group-hover:scale-[1.02] transition-transform duration-300"
+          src={imageUrl}
+          alt={product.title || "Product image"}
+          className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
+          onError={(event) => {
+            event.currentTarget.src =
+              "https://via.placeholder.com/500x500?text=Image+Not+Found";
+          }}
         />
 
+        <button
+          type="button"
+          onClick={() => addToWishlist(product)}
+          className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-white text-xl text-pink-500 shadow-md transition hover:bg-pink-500 hover:text-white"
+        >
+          ♡
+        </button>
       </div>
 
-      {/* Product Info */}
-      <div className="p-4 sm:p-5 flex flex-col flex-1">
+      <div className="flex flex-1 flex-col p-5">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-blue-600">
+          {product.category || "General"}
+        </p>
 
-        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 leading-6 min-h-[48px] line-clamp-2">
+        <h3 className="mb-2 line-clamp-2 min-h-[48px] text-lg font-bold text-gray-900">
           {product.title}
         </h3>
 
-        <p className="text-sm text-gray-500 capitalize mt-3">
-          {product.category}
-        </p>
+        <div className="mb-4 flex items-center justify-between">
+          <span className="text-xl font-bold text-gray-900">
+            ${Number(product.price || 0).toFixed(2)}
+          </span>
 
-        {/* Price */}
-        <div className="mt-4">
-          <span className="text-2xl font-bold text-blue-600">
-            ${Number(product.price).toFixed(2)}
+          <span className="text-sm text-yellow-500">
+            ★ {product.rating || 0}
           </span>
         </div>
 
-        {/* Rating */}
-        <div className="flex items-center gap-2 mt-4">
-          <span className="text-yellow-500 text-xl">
-            ★
-          </span>
-
-          <span className="text-gray-600">
-            {product.rating || "4.5"}
-          </span>
-        </div>
-
-        {/* Buttons */}
-        <div className="flex items-center gap-2 mt-auto pt-6">
-
-          {/* Add To Cart */}
+        <div className="mt-auto grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => addToCart(product)}
-            className="flex-1 h-11 px-3 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition"
+            className="rounded-xl bg-blue-600 px-3 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
           >
             Add to Cart
           </button>
 
-          {/* Details */}
           <Link
             to={`/product/${product._id}`}
-            className="flex-1 h-11 px-3 flex items-center justify-center border-2 border-gray-200 text-gray-700 hover:bg-gray-50 rounded-lg font-medium text-sm transition"
+            className="rounded-xl border border-gray-300 px-3 py-3 text-center text-sm font-semibold text-gray-800 transition hover:border-blue-600 hover:text-blue-600"
           >
             Details
           </Link>
-
         </div>
-
       </div>
     </div>
   );
-}
+};
 
 export default ProductCard;

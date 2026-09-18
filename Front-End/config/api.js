@@ -1,0 +1,1 @@
+export const API_URL = "https://shop-ease-backend-blush.vercel.app";
