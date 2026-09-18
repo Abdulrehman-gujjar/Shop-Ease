@@ -1,4 +1,6 @@
 const Product = require("../models/Product");
+const cloudinary = require("../config/cloudinary");
+const streamifier = require("streamifier");
 
 // =========================
 // GET ALL PRODUCTS
@@ -45,6 +47,32 @@ const getProductById = async (req, res) => {
 };
 
 // =========================
+// UPLOAD IMAGE TO CLOUDINARY
+// =========================
+
+const uploadImageToCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: "shopease-products",
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      }
+    );
+
+    streamifier
+      .createReadStream(fileBuffer)
+      .pipe(uploadStream);
+  });
+};
+
+// =========================
 // CREATE PRODUCT
 // =========================
 
@@ -56,29 +84,30 @@ const createProduct = async (req, res) => {
       category,
     } = req.body;
 
-    // Check basic fields
     if (
       !title ||
       price === undefined ||
       !category
     ) {
       return res.status(400).json({
-        message:
-          "Please provide title, price and category",
+        message: "Please provide title, price and category",
       });
     }
 
-    // Check image
     if (!req.file) {
       return res.status(400).json({
         message: "Please select a product image",
       });
     }
 
-    // Image URL
-    const imageUrl = `/uploads/${req.file.filename}`;
+    // Upload image to Cloudinary
+    const cloudinaryResult = await uploadImageToCloudinary(
+      req.file.buffer
+    );
 
-    // Create product
+    const imageUrl = cloudinaryResult.secure_url;
+
+    // Save Cloudinary URL in MongoDB
     const product = await Product.create({
       title: title.trim(),
       price: Number(price),
@@ -117,9 +146,7 @@ const deleteProduct = async (req, res) => {
       });
     }
 
-    await Product.findByIdAndDelete(
-      req.params.id
-    );
+    await Product.findByIdAndDelete(req.params.id);
 
     res.status(200).json({
       message: "Product deleted successfully",

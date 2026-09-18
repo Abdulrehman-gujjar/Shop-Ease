@@ -1,6 +1,5 @@
 const express = require("express");
 const multer = require("multer");
-const path = require("path");
 
 const {
   getProducts,
@@ -13,28 +12,10 @@ const adminProtect = require("../middleware/adminMiddleware");
 
 const router = express.Router();
 
-// =========================
-// MULTER IMAGE UPLOAD
-// =========================
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, "../uploads"));
-  },
-
-  filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() +
-      "-" +
-      Math.round(Math.random() * 1e9) +
-      path.extname(file.originalname);
-
-    cb(null, uniqueName);
-  },
-});
-
+// Store image temporarily in memory.
+// Do not use diskStorage because Vercel filesystem is read-only.
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
 
   limits: {
     fileSize: 5 * 1024 * 1024,
@@ -49,18 +30,12 @@ const upload = multer({
   },
 });
 
-// =========================
-// CUSTOMER ROUTES
-// =========================
-
+// Customer routes
 router.get("/", getProducts);
 
 router.get("/:id", getProductById);
 
-// =========================
-// ADMIN PRODUCT ROUTES
-// =========================
-
+// Admin routes
 router.post(
   "/",
   adminProtect,
