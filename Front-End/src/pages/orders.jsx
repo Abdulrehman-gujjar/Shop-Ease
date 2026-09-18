@@ -19,7 +19,7 @@ function Orders() {
 
       try {
         const response = await fetch(
-          "https://shop-ease-backend-912xhys0i-e-commerce-e21d.vercel.app/api/orders/my-orders",
+          "https://shop-ease-backend-blush.vercel.app/api/orders/my-orders",
           {
             method: "GET",
             headers: {
@@ -31,7 +31,7 @@ function Orders() {
         const data = await response.json();
 
         if (response.ok) {
-          setOrders(data);
+          setOrders(Array.isArray(data) ? data : data.orders || []);
         } else {
           if (response.status === 401) {
             localStorage.removeItem("token");

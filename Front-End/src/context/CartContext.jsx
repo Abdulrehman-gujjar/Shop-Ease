@@ -4,13 +4,30 @@ export const CartContext = createContext();
 
 function CartProvider({ children }) {
   const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem("cart");
+    const isLoggedIn = Boolean(localStorage.getItem("token"));
+    const savedCart = isLoggedIn ? localStorage.getItem("cart") : null;
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart));
+    if (localStorage.getItem("token")) {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    } else {
+      localStorage.removeItem("cart");
+    }
   }, [cart]);
+
+  useEffect(() => {
+    const handleAuthChange = () => {
+      if (!localStorage.getItem("token")) {
+        setCart([]);
+        localStorage.removeItem("cart");
+      }
+    };
+
+    window.addEventListener("authChange", handleAuthChange);
+    return () => window.removeEventListener("authChange", handleAuthChange);
+  }, []);
 
   const addToCart = (product) => {
     setCart((previousCart) => {

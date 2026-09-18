@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 
 function Navbar() {
-  const { cartCount } = useContext(CartContext);
+  const { cartCount, clearCart } = useContext(CartContext);
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
@@ -48,6 +48,7 @@ function Navbar() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    clearCart();
 
     setUser(null);
 
