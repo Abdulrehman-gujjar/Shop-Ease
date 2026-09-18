@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+const API_URL = "https://shop-ease-backend-blush.vercel.app";
+
 function AdminProducts() {
   const navigate = useNavigate();
 
@@ -19,10 +21,6 @@ function AdminProducts() {
 
   const token = localStorage.getItem("adminToken");
 
-  // =========================
-  // CHECK ADMIN LOGIN
-  // =========================
-
   useEffect(() => {
     if (!token) {
       navigate("/admin/login");
@@ -32,19 +30,20 @@ function AdminProducts() {
     fetchProducts();
   }, [token, navigate]);
 
-  // =========================
-  // GET PRODUCTS
-  // =========================
-
   const fetchProducts = async () => {
     try {
       setLoading(true);
 
-      const response = await fetch(
-        "https://shop-ease-backend-blush.vercel.app/api/products"
-      );
+      const response = await fetch(`${API_URL}/api/products`);
 
       const data = await response.json();
+
+      console.log("Products Response:", data);
+
+      if (!response.ok) {
+        alert(data.message || "Failed to load products");
+        return;
+      }
 
       if (Array.isArray(data)) {
         setProducts(data);
@@ -61,12 +60,8 @@ function AdminProducts() {
     }
   };
 
-  // =========================
-  // IMAGE SELECT
-  // =========================
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
+  const handleImageChange = (event) => {
+    const file = event.target.files?.[0];
 
     if (!file) {
       setImageFile(null);
@@ -74,22 +69,20 @@ function AdminProducts() {
       return;
     }
 
-    // Maximum 5MB
     if (file.size > 5 * 1024 * 1024) {
       alert("Image must be less than 5MB");
 
-      e.target.value = "";
+      event.target.value = "";
       setImageFile(null);
       setPreview("");
 
       return;
     }
 
-    // Check image type
     if (!file.type.startsWith("image/")) {
       alert("Please select a valid image");
 
-      e.target.value = "";
+      event.target.value = "";
       setImageFile(null);
       setPreview("");
 
@@ -102,20 +95,16 @@ function AdminProducts() {
     setPreview(imageUrl);
   };
 
-  // =========================
-  // ADD PRODUCT
-  // =========================
-
-  const handleAddProduct = async (e) => {
-    e.preventDefault();
+  const handleAddProduct = async (event) => {
+    event.preventDefault();
 
     if (!title.trim()) {
       alert("Please enter product name");
       return;
     }
 
-    if (!price) {
-      alert("Please enter product price");
+    if (!price || Number(price) < 0) {
+      alert("Please enter a valid product price");
       return;
     }
 
@@ -134,28 +123,22 @@ function AdminProducts() {
     formData.append("title", title.trim());
     formData.append("price", price);
     formData.append("category", category.trim());
-
-    // IMPORTANT:
-    // Backend multer field name must be "image"
     formData.append("image", imageFile);
 
     try {
       setUploading(true);
 
-      const response = await fetch(
-        "https://shop-ease-backend-blush.vercel.app/api/products",
-        {
-          method: "POST",
-
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-
-          body: formData,
-        }
-      );
+      const response = await fetch(`${API_URL}/api/products`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
       const data = await response.json();
+
+      console.log("Add Product Response:", data);
 
       if (!response.ok) {
         alert(data.message || "Failed to add product");
@@ -164,7 +147,6 @@ function AdminProducts() {
 
       alert("Product added successfully!");
 
-      // Clear form
       setTitle("");
       setPrice("");
       setCategory("");
@@ -175,8 +157,7 @@ function AdminProducts() {
         fileInputRef.current.value = "";
       }
 
-      // Reload products
-      fetchProducts();
+      await fetchProducts();
     } catch (error) {
       console.error("Add product error:", error);
       alert("Server error. Please try again.");
@@ -184,10 +165,6 @@ function AdminProducts() {
       setUploading(false);
     }
   };
-
-  // =========================
-  // DELETE PRODUCT
-  // =========================
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
@@ -199,18 +176,16 @@ function AdminProducts() {
     }
 
     try {
-      const response = await fetch(
-        `https://shop-ease-backend-blush.vercel.app/api/products/${id}`,
-        {
-          method: "DELETE",
-
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`${API_URL}/api/products/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await response.json();
+
+      console.log("Delete Product Response:", data);
 
       if (!response.ok) {
         alert(data.message || "Failed to delete product");
@@ -219,16 +194,12 @@ function AdminProducts() {
 
       alert("Product deleted successfully!");
 
-      fetchProducts();
+      await fetchProducts();
     } catch (error) {
       console.error("Delete product error:", error);
-      alert("Server error");
+      alert("Server error while deleting product");
     }
   };
-
-  // =========================
-  // ADMIN LOGOUT
-  // =========================
 
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
@@ -237,16 +208,11 @@ function AdminProducts() {
     navigate("/admin/login");
   };
 
-  // =========================
-  // PRODUCT IMAGE URL
-  // =========================
-
   const getImageUrl = (thumbnail) => {
     if (!thumbnail) {
-      return "";
+      return "/placeholder.png";
     }
 
-    // If image is already a complete URL
     if (
       thumbnail.startsWith("http://") ||
       thumbnail.startsWith("https://")
@@ -254,47 +220,35 @@ function AdminProducts() {
       return thumbnail;
     }
 
-    // If backend stores /uploads/filename
-    return `https://shop-ease-backend-blush.vercel.app${thumbnail.startsWith("/") ? "" : "/"}${thumbnail}`;
+    return `${API_URL}/${thumbnail.replace(/^\/+/, "")}`;
   };
 
   return (
     <div className="min-h-screen bg-gray-100">
-
-      {/* ================= HEADER ================= */}
-
+      {/* Header */}
       <header className="bg-gray-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-
-          <div className="h-16 flex items-center justify-between">
-
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="flex h-16 items-center justify-between">
             <Link
               to="/admin"
-              className="text-xl sm:text-2xl font-bold"
+              className="text-xl font-bold sm:text-2xl"
             >
               ShopEase Admin
             </Link>
 
             <button
               onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg font-medium transition"
+              className="rounded-lg bg-red-500 px-4 py-2 font-medium transition hover:bg-red-600"
             >
               Logout
             </button>
-
           </div>
-
         </div>
       </header>
 
-      {/* ================= MAIN ================= */}
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-
-        {/* Page Heading */}
-
+      {/* Main */}
+      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
         <div className="mb-8">
-
           <Link
             to="/admin"
             className="text-blue-600 hover:underline"
@@ -302,85 +256,77 @@ function AdminProducts() {
             ← Dashboard
           </Link>
 
-          <h1 className="text-3xl font-extrabold text-gray-900 mt-4">
+          <h1 className="mt-4 text-3xl font-extrabold text-gray-900">
             Product Management
           </h1>
 
-          <p className="text-gray-500 mt-1">
+          <p className="mt-1 text-gray-500">
             Add new products or remove existing products.
           </p>
-
         </div>
 
-        {/* ================= ADD PRODUCT ================= */}
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 mb-8">
-
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        {/* Add Product */}
+        <div className="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+          <h2 className="mb-6 text-2xl font-bold text-gray-900">
             Add New Product
           </h2>
 
           <form
             onSubmit={handleAddProduct}
-            className="grid sm:grid-cols-2 gap-5"
+            className="grid gap-5 sm:grid-cols-2"
           >
-
             {/* Product Name */}
-
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
                 Product Name
               </label>
 
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(event) => setTitle(event.target.value)}
                 placeholder="Product name"
                 required
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition"
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               />
             </div>
 
             {/* Price */}
-
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
                 Price
               </label>
 
               <input
                 type="number"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(event) => setPrice(event.target.value)}
                 placeholder="100"
                 min="0"
                 required
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition"
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               />
             </div>
 
             {/* Category */}
-
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
                 Category
               </label>
 
               <input
                 type="text"
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(event) => setCategory(event.target.value)}
                 placeholder="electronics"
                 required
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition"
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               />
             </div>
 
-            {/* Image Upload */}
-
+            {/* Image */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
                 Product Image
               </label>
 
@@ -389,156 +335,113 @@ function AdminProducts() {
                 type="file"
                 accept="image/jpeg,image/jpg,image/png,image/webp"
                 onChange={handleImageChange}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 bg-white cursor-pointer"
+                className="w-full cursor-pointer rounded-xl border border-gray-200 bg-white px-4 py-3"
               />
 
-              <p className="text-sm text-gray-500 mt-2">
-                Select an image from your computer. Maximum 5MB.
+              <p className="mt-2 text-sm text-gray-500">
+                Maximum image size: 5MB.
               </p>
             </div>
 
-            {/* Image Preview */}
-
+            {/* Preview */}
             {preview && (
               <div className="sm:col-span-2">
-
-                <p className="font-semibold text-gray-700 mb-3">
+                <p className="mb-3 font-semibold text-gray-700">
                   Image Preview
                 </p>
 
-                <div className="w-72 h-72 border border-gray-200 rounded-2xl bg-gray-50 overflow-hidden flex items-center justify-center">
-
+                <div className="flex h-72 w-72 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
                   <img
                     src={preview}
                     alt="Product Preview"
-                    className="w-full h-full object-contain"
+                    className="h-full w-full object-contain"
                   />
-
                 </div>
 
-                <p className="text-green-600 font-semibold mt-3">
+                <p className="mt-3 font-semibold text-green-600">
                   ✓ Image selected successfully
                 </p>
-
               </div>
             )}
 
-            {/* Add Button */}
-
+            {/* Submit */}
             <div className="sm:col-span-2">
-
               <button
                 type="submit"
                 disabled={uploading}
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-8 py-3 rounded-xl font-semibold transition"
+                className="w-full rounded-xl bg-blue-600 px-8 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400 sm:w-auto"
               >
                 {uploading ? "Uploading..." : "+ Add Product"}
               </button>
-
             </div>
-
           </form>
-
         </div>
 
-        {/* ================= ALL PRODUCTS ================= */}
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-
-          <div className="flex items-center justify-between mb-6">
-
+        {/* All Products */}
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="mb-6 flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-900">
               All Products
             </h2>
 
-            <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
+            <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-700">
               {products.length} Products
             </span>
-
           </div>
 
-          {/* Loading */}
-
           {loading ? (
-            <p className="text-gray-500">
-              Loading products...
-            </p>
+            <p className="text-gray-500">Loading products...</p>
           ) : products.length === 0 ? (
-
-            <p className="text-gray-500">
-              No products found.
-            </p>
-
+            <p className="text-gray-500">No products found.</p>
           ) : (
-
             <div className="space-y-4">
-
               {products.map((product) => (
-
                 <div
                   key={product._id || product.id}
-                  className="border border-gray-200 rounded-xl p-4 flex flex-col sm:flex-row gap-4 sm:items-center"
+                  className="flex flex-col gap-4 rounded-xl border border-gray-200 p-4 sm:flex-row sm:items-center"
                 >
-
-                  {/* Product Image */}
-
-                  <div className="w-20 h-20 bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center">
-
-                    {product.thumbnail ? (
-                      <img
-                        src={getImageUrl(product.thumbnail)}
-                        alt={product.title}
-                        className="w-full h-full object-contain"
-                      />
-                    ) : (
-                      <span className="text-gray-400 text-xs">
-                        No Image
-                      </span>
-                    )}
-
+                  {/* Image */}
+                  <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg bg-gray-50">
+                    <img
+                      src={getImageUrl(product.thumbnail)}
+                      alt={product.title || "Product"}
+                      onError={(event) => {
+                        event.currentTarget.src = "/placeholder.png";
+                      }}
+                      className="h-full w-full object-contain"
+                    />
                   </div>
 
-                  {/* Product Information */}
-
+                  {/* Information */}
                   <div className="flex-1">
-
                     <h3 className="font-bold text-gray-900">
                       {product.title}
                     </h3>
 
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="mt-1 text-sm text-gray-500">
                       {product.category}
                     </p>
 
-                    <p className="text-blue-600 font-bold mt-1">
-                      ${Number(product.price).toFixed(2)}
+                    <p className="mt-1 font-bold text-blue-600">
+                      ${Number(product.price || 0).toFixed(2)}
                     </p>
-
                   </div>
 
                   {/* Delete */}
-
                   <button
                     onClick={() =>
                       handleDelete(product._id || product.id)
                     }
-                    className="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-lg font-semibold transition"
+                    className="rounded-lg bg-red-500 px-5 py-2.5 font-semibold text-white transition hover:bg-red-600"
                   >
                     Delete
                   </button>
-
                 </div>
-
               ))}
-
             </div>
-
           )}
-
         </div>
-
       </main>
-
     </div>
   );
 }

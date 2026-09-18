@@ -22,6 +22,8 @@ function AdminOrders() {
 
   const fetchOrders = async () => {
     try {
+      setLoading(true);
+
       const response = await fetch(`${API_URL}/api/orders/admin/all`, {
         method: "GET",
         headers: {
@@ -41,7 +43,9 @@ function AdminOrders() {
 
       const receivedOrders = Array.isArray(data)
         ? data
-        : data.orders || [];
+        : Array.isArray(data.orders)
+        ? data.orders
+        : [];
 
       setOrders(receivedOrders);
     } catch (error) {
@@ -85,6 +89,8 @@ function AdminOrders() {
             : order
         )
       );
+
+      alert("Order status updated successfully");
     } catch (error) {
       console.error("Update Status Error:", error);
       alert("Server error while updating status");
@@ -103,11 +109,7 @@ function AdminOrders() {
       return thumbnail;
     }
 
-    const cleanPath = thumbnail
-      .replace(/^\/+/, "")
-      .replace(/^uploads\//, "");
-
-    return `${API_URL}/uploads/${cleanPath}`;
+    return `${API_URL}/${thumbnail.replace(/^\/+/, "")}`;
   };
 
   const handleLogout = () => {
@@ -161,9 +163,7 @@ function AdminOrders() {
 
         {loading ? (
           <div className="rounded-2xl bg-white p-8 text-center">
-            <p className="text-gray-500">
-              Loading orders...
-            </p>
+            <p className="text-gray-500">Loading orders...</p>
           </div>
         ) : orders.length === 0 ? (
           <div className="rounded-2xl bg-white p-10 text-center">
@@ -192,9 +192,13 @@ function AdminOrders() {
                     </h2>
 
                     <p className="mt-1 text-sm text-gray-500">
-                      {order.user?.name || order.fullName || "Unknown User"}{" "}
+                      {order.user?.name ||
+                        order.fullName ||
+                        "Unknown User"}{" "}
                       ·{" "}
-                      {order.user?.email || order.email || "No email"}
+                      {order.user?.email ||
+                        order.email ||
+                        "No email"}
                     </p>
 
                     <p className="mt-1 text-xs text-gray-400">
@@ -230,7 +234,7 @@ function AdminOrders() {
                         src={getImageUrl(item.thumbnail)}
                         alt={item.title || "Product"}
                         onError={(event) => {
-                          event.currentTarget.style.display = "none";
+                          event.currentTarget.src = "/placeholder.png";
                         }}
                         className="h-16 w-16 rounded-lg bg-gray-50 object-contain"
                       />
@@ -287,16 +291,12 @@ function AdminOrders() {
                   </div>
 
                   <div className="text-left md:text-right">
-                    <p className="text-gray-500">
-                      Total
-                    </p>
+                    <p className="text-gray-500">Total</p>
 
                     <p className="text-2xl font-extrabold text-blue-600">
                       $
                       {Number(
-                        order.totalPrice ||
-                          order.total ||
-                          0
+                        order.totalPrice || order.total || 0
                       ).toFixed(2)}
                     </p>
                   </div>
